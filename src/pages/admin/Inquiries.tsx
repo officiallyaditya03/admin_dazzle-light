@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
+import type { Updates } from "@/integrations/supabase/database.types";
 
 type InquiryStatus = "new" | "contacted" | "negotiating" | "quoted" | "won" | "lost" | "closed";
 
@@ -89,7 +90,8 @@ export default function AdminInquiries() {
 
   const handleStatusChange = async (inquiryId: string, newStatus: InquiryStatus) => {
     try {
-      const { error } = await supabase.from("inquiries").update({ status: newStatus }).eq("id", inquiryId);
+      const updateData: Updates<"inquiries"> = { status: newStatus };
+      const { error } = await supabase.from("inquiries").update(updateData).eq("id", inquiryId);
       if (error) throw error;
       toast({ title: `Status updated to ${newStatus}` });
       fetchInquiries();
@@ -106,7 +108,8 @@ export default function AdminInquiries() {
 
   const handlePriorityChange = async (inquiryId: string, priority: string) => {
     try {
-      const { error } = await supabase.from("inquiries").update({ priority }).eq("id", inquiryId);
+      const updateData: Updates<"inquiries"> = { priority };
+      const { error } = await supabase.from("inquiries").update(updateData).eq("id", inquiryId);
       if (error) throw error;
       toast({ title: `Priority updated to ${priority}` });
       fetchInquiries();
@@ -122,9 +125,13 @@ export default function AdminInquiries() {
 
     setIsSaving(true);
     try {
+      const updateData: Updates<"inquiries"> = {
+        notes,
+        follow_up_date: followUpDate || null,
+      };
       const { error } = await supabase
         .from("inquiries")
-        .update({ notes, follow_up_date: followUpDate || null })
+        .update(updateData)
         .eq("id", selectedInquiry.id);
 
       if (error) throw error;

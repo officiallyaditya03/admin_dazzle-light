@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
+import type { Updates, Inserts } from "@/integrations/supabase/database.types";
 
 interface Product {
   id: string;
@@ -156,9 +157,9 @@ export default function AdminProducts() {
     setIsSaving(true);
     try {
       const payload = {
-        name: formData.name,
+        name: formData.name!,
         sku: formData.sku || null,
-        category: formData.category,
+        category: formData.category!,
         subcategory: formData.subcategory || null,
         description: formData.description || null,
         price: formData.price || 0,
@@ -172,18 +173,20 @@ export default function AdminProducts() {
         ip_rating: formData.ip_rating || null,
         voltage: formData.voltage || null,
         warranty: formData.warranty || null,
-        moq: formData.moq || 1,
-        is_featured: formData.is_featured || false,
+        moq: formData.moq || null,
+        is_featured: formData.is_featured ?? false,
         is_active: formData.is_active ?? true,
         image_url: formData.image_url || null,
       };
 
       if (editingProduct?.id) {
-        const { error } = await supabase.from("products").update(payload).eq("id", editingProduct.id);
+        const updatePayload: Updates<"products"> = payload;
+        const { error } = await supabase.from("products").update(updatePayload).eq("id", editingProduct.id);
         if (error) throw error;
         toast({ title: "Product updated successfully" });
       } else {
-        const { error } = await supabase.from("products").insert(payload);
+        const insertPayload: Inserts<"products"> = payload;
+        const { error } = await supabase.from("products").insert(insertPayload);
         if (error) throw error;
         toast({ title: "Product created successfully" });
       }
