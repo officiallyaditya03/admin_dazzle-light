@@ -57,12 +57,15 @@ export default function AdminRegister() {
       }
 
       if (signUpData.user) {
-        const { error: requestError } = await supabase.from("admin_requests").insert({
-          user_id: signUpData.user.id,
-          full_name: fullName,
-          email,
-          status: "pending",
-        });
+        const { error: requestError } = await supabase
+          .from("admin_requests")
+          // @ts-ignore - Supabase types inference issue, runtime is correct
+          .insert({
+            user_id: signUpData.user.id,
+            full_name: fullName,
+            email,
+            status: "pending",
+          });
 
         if (requestError) {
           // eslint-disable-next-line no-console

@@ -9,6 +9,7 @@ import AdminSettings from "@/pages/admin/Settings";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export default function App() {
+  console.log("🚀 App component rendering...");
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/admin" replace />} />

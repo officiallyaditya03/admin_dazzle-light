@@ -13,15 +13,21 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 async function fetchIsAdmin(userId: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
+  try {
+    // @ts-ignore - Supabase types inference issue, runtime is correct
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
 
-  if (error) return false;
-  return Boolean(data);
+    if (error) return false;
+    return Boolean(data);
+  } catch (error) {
+    console.error("Error checking admin status:", error);
+    return false;
+  }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -33,23 +39,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     const init = async () => {
-      setIsLoading(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      try {
+        setIsLoading(true);
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (!mounted) return;
-      const nextUser = session?.user ?? null;
-      setUser(nextUser);
+        if (!mounted) return;
+        const nextUser = session?.user ?? null;
+        setUser(nextUser);
 
-      if (nextUser) {
-        const admin = await fetchIsAdmin(nextUser.id);
-        if (mounted) setIsAdmin(admin);
-      } else {
-        setIsAdmin(false);
+        if (nextUser) {
+          const admin = await fetchIsAdmin(nextUser.id);
+          if (mounted) setIsAdmin(admin);
+        } else {
+          setIsAdmin(false);
+        }
+
+        if (mounted) setIsLoading(false);
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        if (mounted) {
+          setIsLoading(false);
+          setUser(null);
+          setIsAdmin(false);
+        }
       }
-
-      if (mounted) setIsLoading(false);
     };
 
     init();
